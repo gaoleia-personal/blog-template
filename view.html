@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Language" content="zh-CN">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
+    <title>Centos 安装 PHP7.4 + Nginx</title>
+    <meta name="keywords" content="AUTHOR的个人博客" />
+    <meta name="description" content="之前的服务器 到期了，没准备续，重新租了一个服务器。php7.4 发布已经有这么久了，就想着用一下试试。这里记录 安装过程" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link href="./plug/font-awesome-4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="./plug/css/main.css" rel="stylesheet">
+    <link href="./plug/css/github-markdown.css" rel="stylesheet" 0="home\assets\AppAsset">
+</head>
+<body>
+<!-- Public Code -->
+<header>
+    <div class="content">
+        <div class="web-name">一个PHPer</div>
+        <nav>
+            <a href="./"> <i class="fa fa-home"></i> 首页</a>
+            <a href="./list.html"><i class="fa fa-list"></i>文章</a>
+            <a href="./essay.html"><i class="fa fa-leaf"></i>随笔</a>
+        </nav>
+    </div>
+    <span class="nav-switch fa fa-angle-right"></span>
+</header>
+<!--  Public Code END -->
+<!--  PAGE CODE  -->
+<section class="container">
+    <div class="main">
+        <blockquote>
+            <a href="./" title="网站首页">网站首页</a>
+            <a href="./list.html" title="文章专栏">文章专栏</a>
+            <cite>Centos 安装 PHP7.4 + Nginx</cite>
+        </blockquote>
+        <div class="article">
+            <div class="article-title">Centos 安装 PHP7.4 + Nginx</div>
+            <div class="article-info">
+                <span>编辑时间：2019-12-12 21:18</span>
+                <span>作者：AUTHOR</span>
+                <span>浏览量：107</span>
+            </div>
+            <p class="article-desc">之前的服务器 到期了，没准备续，重新租了一个服务器。php7.4 发布已经有这么久了，就想着用一下试试。这里记录 安装过程</p>
+            <div class="article-content">
+                <article class="markdown-body"><h1>准备</h1>
+                    <h2>1、下载所需安装包</h2>
+                    <pre><code class="language-shell">wget https://www.php.net/distributions/php-7.4.0.tar.gz
+wget http://nginx.org/download/nginx-1.17.6.tar.gz</code></pre>
+                    <h2>2、安装所需扩展</h2>
+                    <pre><code class="language-shell">yum install -y gcc gcc-c++ make cmake bison autoconf wget lrzsz libtool libtool-ltdl-devel freetype-devel libjpeg.x86_64 libjpeg-devel libpng-devel gd-devel python-devel  patch  sudo openssl* openssl openssl-devel ncurses-devel bzip* bzip2 unzip zlib-devel libevent* libxml* libxml2-devel libcurl* curl-devel readline-devel sqlite-devel libsodium-devel https://dl.fedoraproject.org/pub/epel/7/x86_64/Packages/o/oniguruma-5.9.5-3.el7.x86_64.rpm https://dl.fedoraproject.org/pub/epel/7/x86_64/Packages/o/oniguruma-devel-5.9.5-3.el7.x86_64.rpm</code></pre>
+                    <h1>安装PHP</h1>
+                    <h2>1、解压-进入目录-生成编译文件</h2>
+                    <pre><code class="language-shell">tar -zxvf php-7.4.0.tar.gz
+cd php-7.4.0
+./configure --prefix=/usr/local/php \
+   --with-config-file-scan-dir=/usr/local/php/etc/ \
+   --with-mhash --with-pdo-mysql \
+   --with-openssl --with-mysqli \
+   --with-iconv --with-zlib \
+   --enable-inline-optimization \
+   --disable-debug --disable-rpath \
+   --enable-shared --enable-xml \
+   --enable-bcmath --enable-shmop \
+   --enable-sysvsem --enable-sysvshm --enable-mbregex \
+   --enable-mbstring --enable-ftp \
+   --enable-pcntl --enable-sockets \
+   --with-xmlrpc --enable-soap \
+   --without-pear --with-gettext \
+   --enable-session --with-curl \
+   --enable-opcache --enable-fpm \
+   --without-gdbm --enable-fast-install \
+   --disable-fileinfo --with-sodium</code></pre>
+                    <h2>2、编译 并 安装</h2>
+                    <pre><code class="language-shell">make &amp;&amp; make install</code></pre>
+                    <h2>3、配置文件</h2>
+                    <ul>
+                        <li>1.复制配置文件到安装目录</li>
+                    </ul>
+                    <pre><code class="language-shell">cp ~/php-7.4.0/php.ini-production /usr/local/php/etc/php.ini
+cp /usr/local/php/etc/php-fpm.conf.default /usr/local/php/etc/php-fpm.conf
+cp /usr/local/php/etc/php-fpm.d/www.conf.default /usr/local/php/etc/php-fpm.d/www.conf</code></pre>
+                    <ul>
+                        <li>2.修改<code>PHP</code> 配置文件 <code>php.ini</code></li>
+                    </ul>
+                    <pre><code class="language-shell">vim /usr/local/php/etc/php.ini</code></pre>
+                    <p>内容修改如下：</p>
+                    <pre><code class="language-shell">; 不显示错误，默认
+display_errors = Off
+
+; 在关闭display_errors后开启PHP错误日志（路径在php-fpm.conf中配置），默认
+log_errors = On
+
+; 字符集，默认
+default_charset = "UTF-8"
+
+; 文件上传大小，默认值太小，建议修改10M
+upload_max_filesize = 2M
+
+; Maximum size of POST data that PHP will accept.  表单最大值，默认是8M，如果表单含有多图上传，大小可能不够。超过该大小后台收不到 表单数据
+post_max_size = 8M
+
+; 设置PHP的扩展库路径，默认被注释了，之后一个文件夹 于 你/usr/local/php/lib/php/extensions/ 下的文件夹同名。
+extension_dir = "./usr/local/php/lib/php/extensions/no-debug-non-zts-20151012/"
+
+; 设置PHP的时区
+date.timezone = PRC
+
+; 开启opcache，默认是0
+[opcache]
+; Determines if Zend OPCache is enabled
+opcache.enable=1</code></pre>
+                    <ul>
+                        <li>3.修改<code>php-fpm</code> 的配置文件 <code>php-fpm.conf</code></li>
+                    </ul>
+                    <pre><code class="language-shell">vim /usr/local/php/etc/php-fpm.conf</code></pre>
+                    <p>内容修改如下</p>
+                    <pre><code class="language-shell">; 去掉里分号，方便以后重启。建议修改
+; Default Value: none
+; 下面的值最终目录是/usr/local/php/var/run/php-fpm.pid
+; 开启后可以平滑重启php-fpm
+pid = run/php-fpm.pid
+
+; 设置错误日志的路径，可以默认值
+; Note: the default prefix is /usr/local/php/var
+; Default Value: log/php-fpm.log, 即/usr/local/php/var/log/php-fpm.log
+error_log = /var/log/php-fpm/error.log
+
+; Log等级，可以默认值
+; Possible Values: alert, error, warning, notice, debug
+; Default Value: notice
+log_level = notice
+
+; 后台运行，默认yes，可以默认值
+; Default Value: yes
+; daemonize = yes
+
+; 引入www.conf文件中的配置，可以默认值
+include=/usr/local/php/etc/php-fpm.d/*.conf</code></pre>
+                    <ul>
+                        <li>4.修改 <code>www.conf</code></li>
+                    </ul>
+                    <pre><code class="language-shell">vim /usr/local/php/etc/php.ini</code></pre>
+                    <p>内容修改如下：</p>
+                    <pre><code>; 设置用户和用户组，默认都是nobody。可以默认值
+user = nginx
+group = nginx
+
+; 设置PHP监听
+; 下面是默认值，不建议使用。可以默认值
+listen = 127.0.0.1:9000
+; 根据nginx.conf中的配置fastcgi_pass unix:/var/run/php-fpm/php-fpm.sock;
+;listen = /var/run/php-fpm/php-fpm.sock
+
+######开启慢日志。可以默认值
+slowlog = /var/log/php-fpm/$pool-slow.log
+request_slowlog_timeout = 10s</code></pre>
+                    <h2>4、php-fpm 操作</h2>
+                    <pre><code class="language-shell">/usr/local/php/sbin/php-fpm -t        # php-fpm检测配置文件是否正确
+/usr/local/php/sbin/php-fpm         # php-fpm启动
+kill -INT `cat /usr/local/php/var/run/php-fpm.pid`      # php-fpm关闭
+kill -USR2 `cat /usr/local/php/var/run/php-fpm.pid`     #php-fpm平滑重启</code></pre>
+                    <h1>安装nginx</h1>
+                    <h2>1、解压-进入目录-生成编译文件</h2>
+                    <pre><code class="language-shell">tar -zxvf nginx-1.17.6.tar.gz
+cd nginx-1.17.6
+./configure \
+    --prefix=/usr/local/nginx \
+    --with-http_stub_status_module  \
+    --with-http_ssl_module \
+    --with-http_realip_module \
+    --with-http_sub_module \
+    --with-http_gzip_static_module \
+    --with-pcre</code></pre>
+                    <h2>2、编译 &amp;&amp; 安装</h2>
+                    <pre><code class="language-shell">make
+make install</code></pre>
+                    <ul>
+                        <li>测试一下 <code>/usr/local/nginx/sbin/nginx -t</code></li>
+                    </ul>
+                    <pre><code class="language-shell">nginx: configuration file /usr/local/nginx/conf/nginx.conf test is successful #测试成功</code></pre>
+                    <h2>3、配置文件</h2>
+                    <ul>
+                        <li>1.配置 <code>nginx.conf</code>,执行 <code>vim /usr/local/nginx/conf/nginx.conf</code></li>
+                    </ul>
+                    <p>内容修改如下</p>
+                    <pre><code class="language-conf">#user  nobody;
+worker_processes  1;
+
+error_log  /www/logs/nginx/error.log;
+error_log  /www/logs/nginx/error_notice.log  notice;
+#error_log  logs/error.log  info;
+
+#pid        logs/nginx.pid;
+
+events {
+    worker_connections  1024;
+}
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    #access_log  logs/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+    #显示目录
+    #autoindex on;
+    #显示文件大小
+    #autoindex_exact_size on;
+    #显示文件时间
+    #autoindex_localtime on;
+
+    include /www/conf/vhosts/*.conf;
+}</code></pre>
+                    <ul>
+                        <li>2.添加网站配置文件</li>
+                    </ul>
+                    <pre><code>vim /www/conf/vhosts/default.conf</code></pre>
+                    <p>文件内容如下</p>
+                    <pre><code>server{
+    listen 80;
+    server_name localhost,www.songqi-blog.com;
+    root /www/web/default;
+    location / {
+       #开启 url 美化
+        if (!-e $request_filename){
+            rewrite ^/(.*) /index.php last;
+        }
+        index index.html index.php;
+    }
+    location ~ \.php$ {
+        include fastcgi.conf;
+        fastcgi_pass 127.0.0.1:9000;
+        try_files $uri = 404;
+    }
+}</code></pre>
+                    <h2>4、测试 配置</h2>
+                    <ul>
+                        <li>运行 <code>/usr/local/nginx/sbin/nginx -t</code>，若测试失败，返回检查执行步骤是否有错误</li>
+                    </ul>
+                    <h2>5、nginx 操作</h2>
+                    <pre><code class="language-shell">/usr/local/nginx/sbin/nginx -t          # 检测配置文件是否正确
+/usr/local/nginx/sbin/nginx             # 启动
+/usr/local/nginx/sbin/nginx -s stop     # 关闭
+/usr/local/nginx/sbin/nginx -s reload   #平滑重启</code></pre>
+                    <p>The End</p>
+                </article>
+                <p>
+                        转载请注明出处
+                        <a href="" class="text-primary">http://www.test.com./view.html?id=201912122118554861</a>
+                    </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="others">
+        <div class="classify">
+            <div class="title">分类导航</div>
+            <div class="content">
+                <a href="./list.html">所有文章</a>
+                <a class='cur' href="./list.html?tag=Server">
+                    Server </a>
+                <a href='./list.html?tag=PHP'>PHP</a><a href='./list.html?tag=MySQL'>MySQL</a><a
+                    href='./list.html?tag=Python'>Python</a><a
+                    href='./list.html?tag=Web'>Web</a></div>
+        </div>
+        <div style="display: none"></div>
+        <div class="other-module">
+            <div class="title">相似文章</div>
+            <div class="other-list">
+                <a class="no-wrap" href="./view.html">mac catalina php 安装扩展 redis</a>
+                <a class="no-wrap" href="./view.html">mac catalina php 安装扩展 redis</a>
+                <a class="no-wrap" href="./view.html">mac catalina php 安装扩展 redis</a>
+                <a class="no-wrap" href="./view.html">mac catalina php 安装扩展 redis</a>
+                <a class="no-wrap" href="./view.html">mac catalina php 安装扩展 redis</a>
+                <a class="no-wrap" href="./view.html">mac catalina php 安装扩展 redis</a>
+                <a class="no-wrap" href="./view.html">mac catalina php 安装扩展 redis</a>
+                <a class="no-wrap" href="./view.html">mac catalina php 安装扩展 redis</a>
+                <a class="no-wrap" href="./view.html">mac catalina php 安装扩展 redis</a>
+                <a class="no-wrap" href="./view.html">mac catalina php 安装扩展 redis</a>
+            </div>
+        </div>
+        <div class="other-module">
+            <div class="title">随便看看</div>
+            <div class="other-list">
+                <a class="no-wrap" href="./view.html">公众号 模板消息推送</a>
+                <a class="no-wrap" href="./view.html">公众号 模板消息推送</a>
+                <a class="no-wrap" href="./view.html">公众号 模板消息推送</a>
+                <a class="no-wrap" href="./view.html">公众号 模板消息推送</a>
+                <a class="no-wrap" href="./view.html">公众号 模板消息推送</a>
+                <a class="no-wrap" href="./view.html">公众号 模板消息推送</a>
+                <a class="no-wrap" href="./view.html">公众号 模板消息推送</a>
+                <a class="no-wrap" href="./view.html">公众号 模板消息推送</a>
+                <a class="no-wrap" href="./view.html">公众号 模板消息推送</a>
+                <a class="no-wrap" href="./view.html">公众号 模板消息推送</a>
+            </div>
+        </div>
+    </div>
+</section>
+<!--  PAGE CODE  -->
+<!-- Public Code -->
+<footer>一个PHPer</footer>
+<script src="./plug/js/jquery-3.4.1.min.js"></script>
+<script src="./plug/js/main.js"></script>
+</body>
+</html>
+<!--  Public Code END -->
